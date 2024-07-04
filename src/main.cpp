@@ -17,26 +17,40 @@
 
 // Ressources
 // https://randomnerdtutorials.com/esp32-websocket-server-arduino/#1
-// https://randomnerdtutorials.com/esp32-mqtt-publish-subscribe-arduino-ide/
+// https://randomnerdtutorials.com/esp32-mqtt-publish-subscribe-arduino-ide/-
 // https://randomnerdtutorials.com/esp32-static-fixed-ip-address-arduino-ide/
 // https://github.com/Freenove/Freenove_4WD_Car_Kit_for_ESP32/tree/master
 
-char *ssid_wifi = "xxxxx";            // Le nom du réseau WiFi
-char *password_wifi = "xxxxx"; // Le password du WiFi
+char *ssid_wifi = "iPhonejason";  // Le nom du réseau WiFi
+char *password_wifi = "jl933602"; // Le password du WiFi
 
-const char *mqtt_server = "192.168.64.40"; // L'IP de votre broker MQTT
-const int mqtt_interval_ms = 5000;          // L'interval en ms entre deux envois de données
 
-IPAddress localIP(192, 168, 64, 50); // l'IP que vous voulez donner à votre voiture
 
-IPAddress localGateway(192, 168, 64, 136); // L'IP de la gateway de votre réseau
-IPAddress localSubnet(255, 255, 255, 0);  // Le masque de sous réseau
+const char *mqtt_server = "172.20.10.2";
+const int mqtt_port = 1883;
+const int mqtt_interval_ms = 5000; // L'interval en ms entre deux envois de données
+char *mqttId = "";
+char *mqttUser = "";
+char *mqttPass = "";
+
+
+// test des boutons avec ledPin
+bool ledState = 0;
+const int ledPin = 3;
+
+
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
+
+IPAddress localIP(172, 20, 10, 3); // l'IP que vous voulez donner à votre voiture
+
+IPAddress localGateway(172, 20, 10, 1); // L'IP de la gateway de votre réseau
+IPAddress localSubnet(255, 255, 255, 240);  // Le masque de sous réseau
 
 IPAddress primaryDNS(8, 8, 8, 8);
 IPAddress secondaryDNS(8, 8, 4, 4);
 
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -61,6 +75,8 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 void initWebSocket();
 void reconnect();
 
+
+
 void WiFi_Init()
 {
     ssid_Router = ssid_wifi;         // Modify according to your router name
@@ -70,120 +86,141 @@ void WiFi_Init()
     frame_size = FRAMESIZE_CIF;      // 400*296
 }
 
-void setup()
-{
-    // delay(5000);
 
-    Serial.begin(115200);
-    Serial.setDebugOutput(true);
+// JS
 
-    if (!WiFi.config(localIP, localGateway, localSubnet, primaryDNS, secondaryDNS))
-    {
-        Serial.println("STA Failed to configure");
+
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <title>ESP Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+  html {
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+  }
+  h1 {
+    font-size: 1.8rem;
+    color: white;
+  }
+  h2{
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #143642;
+  }
+  .topnav {
+    overflow: hidden;
+    background-color: #143642;
+  }
+  body {
+    margin: 0;
+  }
+  .content {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .card {
+    background-color: #F8F7F9;;
+    box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
+    padding-top:10px;
+    padding-bottom:20px;
+  }
+  .button {
+    padding: 15px 50px;
+    font-size: 24px;
+    text-align: center;
+    outline: none;
+    color: #fff;
+    background-color: #0f8b8d;
+    border: none;
+    border-radius: 5px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+   }
+   /*.button:hover {background-color: #0f8b8d}*/
+   .button:active {
+     background-color: #0f8b8d;
+     box-shadow: 2 2px #CDCDCD;
+     transform: translateY(2px);
+   }
+   .state {
+     font-size: 1.5rem;
+     color:#8c8c8c;
+     font-weight: bold;
+   }
+  </style>
+<title>ESP Web Server</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+</head>
+<body>
+  <div class="topnav">
+    <h1>ESP WebSocket Server</h1>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h2>Output - GPIO 2</h2>
+      <p class="state">state: <span id="state">%STATE%</span></p>
+      <p><button id="button" class="button">Toggle</button></p>
+    </div>
+  </div>
+<script>
+  var gateway = `ws://${window.location.hostname}/ws`;
+  var websocket;
+  window.addEventListener('load', onLoad);
+  function initWebSocket() {
+    console.log('Trying to open a WebSocket connection...');
+    websocket = new WebSocket(gateway);
+    websocket.onopen    = onOpen;
+    websocket.onclose   = onClose;
+    websocket.onmessage = onMessage; // <-- add this line
+  }
+  function onOpen(event) {
+    console.log('Connection opened');
+  }
+  function onClose(event) {
+    console.log('Connection closed');
+    setTimeout(initWebSocket, 2000);
+  }
+  function onMessage(event) {
+    var state;
+    if (event.data == "1"){
+      state = "ON";
     }
-
-    Buzzer_Setup(); // Buzzer initialization
-    WiFi_Init();    // WiFi paramters initialization
-    WiFi_Setup(0);  // Start AP Mode. If you want to connect to a router, change 1 to 0.
-    // server_Cmd.begin(4000);    // Start the command server
-    server_Camera.begin(7000); // Turn on the camera server
-
-    cameraSetup(); // Camera initialization
-    camera_vflip(true);
-    camera_hmirror(true);
-    Emotion_Setup();    // Emotion initialization
-    WS2812_Setup();     // WS2812 initialization
-    PCA9685_Setup();    // PCA9685 initialization
-    Light_Setup();      // Light initialization
-    Track_Setup();      // Track initialization
-    Ultrasonic_Setup(); // Initialize the ultrasonic module
-
-    // Cette section serait peut être à virer...
-    disableCore0WDT(); // Turn off the watchdog function in kernel 0
-    xTaskCreateUniversal(loopTask_Camera, "loopTask_Camera", 8192, NULL, 0, NULL, 0);
-    xTaskCreateUniversal(loopTask_WTD, "loopTask_WTD", 8192, NULL, 0, NULL, 0);
-
-    client.setServer(mqtt_server, 1883);
-
+    else{
+      state = "OFF";
+    }
+    document.getElementById('state').innerHTML = state;
+  }
+  function onLoad(event) {
     initWebSocket();
+    initButton();
+  }
+  function initButton() {
+    document.getElementById('button').addEventListener('click', toggle);
+  }
+  function toggle(){
+    websocket.send('toggle');
+  }
+</script>
+</body>
+</html>
+)rawliteral";
 
-    // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           { 
-    //             camera_fb_t *fb = NULL;
-    //             fb = esp_camera_fb_get();
-    //                     if (fb != NULL)
-    //                     {
-    //                         uint8_t slen[4];
-    //                         slen[0] = fb->len >> 0;
-    //                         slen[1] = fb->len >> 8;
-    //                         slen[2] = fb->len >> 16;
-    //                         slen[3] = fb->len >> 24;
-    //                         AsyncResponseStream *response = request->beginResponseStream("image");
-    //                         // response->write(slen, 4);
-    //                         response->write(fb->buf, fb->len);
-    //                         request->send(response);
-    //                         // client.write(slen, 4);
-    //                         // client.write(fb->buf, fb->len);
-    //                         // request->send_P(200, "application/octet-stream", fb->buf, fb->len);
-    //                         // request->send(fb->buf, "application/octet-stream", fb->len);
-    //                         // Serial.println("Camera send");
-    //                         esp_camera_fb_return(fb);
-    //                         fb = NULL;
-    //                     } });
 
-    server.begin();
-
-    // Init the state of the car
-    Emotion_SetMode(1);
-    WS2812_SetMode(1);
-}
-
-void loop()
-{
-    // put your main code here, to run repeatedly:
-    ws.cleanupClients();
-
-    Emotion_Show(emotion_task_mode); // Led matrix display function
-    WS2812_Show(ws2812_task_mode);   // Car color lights display function
-
-    // The MQTT part
-    if (!client.connected())
-    {
-        reconnect();
-    }
-    client.loop();
-
-    long now = millis();
-    if (now - last_message > mqtt_interval_ms)
-    {
-        last_message = now;
-
-        // Les led et la batteries sont branchés tous les deux sur le pin 32
-        // du coup, lire la valeur de batterie fait freeze la batterie
-        // Battery level
-        // dtostrf(Get_Battery_Voltage(), 5, 2, buff);
-        // client.publish("esp32/battery", buff);
-
-        // Track Read
-        Track_Read();
-        sensor_v = static_cast<int>(sensorValue[3]);
-        char const *n_char = std::to_string(sensor_v).c_str();
-        client.publish("esp32/track", n_char);
-
-        // Ultrasonic Data
-        dtostrf(Get_Sonar(), 5, 2, ultrasonic_buff);
-        client.publish("esp32/sonar", ultrasonic_buff);
-
-        // Photosensitive Data
-        dtostrf(Get_Photosensitive(), 5, 2, ultrasonic_buff);
-        client.publish("esp32/light", ultrasonic_buff);
-    }
-}
 
 // put function definitions here:
 void notifyClients()
 {
-    ws.textAll("ok");
+    ws.textAll(String(ledState));
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
@@ -191,6 +228,21 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
 
     // Serial.println((char *)data);
+
+
+
+    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
+    {
+        data[len] = 0;
+
+        if(strcmp((char*)data, "toggle") == 0) {
+          ledState = !ledState;
+          notifyClients();
+        }
+
+    }
+    
+
 
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
     {
@@ -296,6 +348,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
     case WS_EVT_ERROR:
         break;
     }
+    
 }
 
 void initWebSocket()
@@ -304,18 +357,184 @@ void initWebSocket()
     server.addHandler(&ws);
 }
 
+
+
+
+String processor(const String& var) {
+  Serial.println(var);
+  if(var == "State") {
+    if(ledState){
+      return "ON";
+    }
+    else {
+      return "OFF";
+    }
+  }
+  return String();
+}
+
+
+void setup()
+{
+    // delay(5000);
+
+    Serial.begin(115200);
+    Serial.setDebugOutput(true);
+
+
+
+
+    pinMode(ledPin, OUTPUT);
+    digitalWrite(ledPin, LOW);
+
+
+
+
+    if (!WiFi.config(localIP, localGateway, localSubnet, primaryDNS, secondaryDNS))
+    {
+        Serial.println("STA Failed to configure");
+    }
+
+
+
+    Buzzer_Setup(); // Buzzer initialization
+    WiFi_Init();    // WiFi paramters initialization
+    WiFi_Setup(0);  // Start AP Mode. If you want to connect to a router, change 1 to 0.
+    // server_Cmd.begin(4000);    // Start the command server
+    server_Camera.begin(7000); // Turn on the camera server
+
+    /* cameraSetup(); // Camera initialization
+    camera_vflip(true);
+    camera_hmirror(true);
+    */
+    Emotion_Setup();    // Emotion initialization
+    WS2812_Setup();     // WS2812 initialization
+    PCA9685_Setup();    // PCA9685 initialization
+    Light_Setup();      // Light initialization
+    Track_Setup();      // Track initialization
+    Ultrasonic_Setup(); // Initialize the ultrasonic module
+
+    // Cette section serait peut être à virer...
+   // disableCore0WDT(); // Turn off the watchdog function in kernel 0
+   // xTaskCreateUniversal(loopTask_Camera, "loopTask_Camera", 8192, NULL, 0, NULL, 0);
+   // xTaskCreateUniversal(loopTask_WTD, "loopTask_WTD", 8192, NULL, 0, NULL, 0);
+
+    client.setServer(mqtt_server, mqtt_port);
+
+
+    initWebSocket();
+
+    // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+    //           { 
+    //             camera_fb_t *fb = NULL;
+    //             fb = esp_camera_fb_get();
+    //                     if (fb != NULL)
+    //                     {
+    //                         uint8_t slen[4];
+    //                         slen[0] = fb->len >> 0;
+    //                         slen[1] = fb->len >> 8;
+    //                         slen[2] = fb->len >> 16;
+    //                         slen[3] = fb->len >> 24;
+    //                         AsyncResponseStream *response = request->beginResponseStream("image");
+    //                         // response->write(slen, 4);
+    //                         response->write(fb->buf, fb->len);
+    //                         request->send(response);
+    //                         // client.write(slen, 4);
+    //                         // client.write(fb->buf, fb->len);
+    //                         // request->send_P(200, "application/octet-stream", fb->buf, fb->len);
+    //                         // request->send(fb->buf, "application/octet-stream", fb->len);
+    //                         // Serial.println("Camera send");
+    //                         esp_camera_fb_return(fb);
+    //                         fb = NULL;
+    //                     } });
+
+
+  // Route for root / web page
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", index_html, processor);
+  });
+
+
+    server.begin();
+
+    // Init the state of the car
+    Emotion_SetMode(1);
+    WS2812_SetMode(1);
+}
+
+void loop()
+{
+    // put your main code here, to run repeatedly:
+    ws.cleanupClients();
+
+    digitalWrite(ledPin, ledState);
+
+
+    Emotion_Show(emotion_task_mode); // Led matrix display function
+    WS2812_Show(ws2812_task_mode);   // Car color lights display function
+
+    // The MQTT part
+    if (!client.connected())
+    {
+        reconnect();
+    }
+    client.loop();
+
+    long now = millis();
+    if (now - last_message > mqtt_interval_ms)
+    {
+        last_message = now;
+
+        // Les led et la batteries sont branchés tous les deux sur le pin 32
+        // du coup, lire la valeur de batterie fait freeze la batterie
+        // Battery level
+        // dtostrf(Get_Battery_Voltage(), 5, 2, buff);
+        // client.publish("esp32/battery", buff);
+
+        // Track Read
+        Track_Read();
+        sensor_v = static_cast<int>(sensorValue[3]);
+        char const *n_char = std::to_string(sensor_v).c_str();
+        client.publish("esp32/track", n_char);
+
+        // Ultrasonic Data
+        dtostrf(Get_Sonar(), 5, 2, ultrasonic_buff);
+        client.publish("esp32/sonar", ultrasonic_buff);
+
+        // Photosensitive Data
+        dtostrf(Get_Photosensitive(), 5, 2, ultrasonic_buff);
+        client.publish("esp32/light", ultrasonic_buff);
+
+
+    }
+}
+
+
+
+
+
+
+
+
+
 void reconnect()
 {
     // Loop until we're reconnected
     while (!client.connected())
     {
+
+
+
+
+
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
-        if (client.connect("ESP8266Client"))
+        if (client.connect(mqttId, mqttUser, mqttPass))
         {
             Serial.println("connected");
             // Subscribe
             client.subscribe("esp32/output");
+
         }
         else
         {
@@ -328,44 +547,7 @@ void reconnect()
     }
 }
 
-// void loopTask_Camera(void *pvParameters)
-// {
-//     while (1)
-//     {
-//         WiFiClient wf_client = server_Camera.available(); // listen for incoming clients
-//         if (wf_client)
-//         { // if you get a client
-//             Serial.println("Camera_Server connected to a client.");
-//             if (wf_client.connected())
-//             {
-//                 camera_fb_t *fb = NULL;
-//                 while (wf_client.connected())
-//                 { // loop while the client's connected
-//                     if (videoFlag == 1)
-//                     {
-//                         fb = esp_camera_fb_get();
-//                         if (fb != NULL)
-//                         {
-//                             uint8_t slen[4];
-//                             slen[0] = fb->len >> 0;
-//                             slen[1] = fb->len >> 8;
-//                             slen[2] = fb->len >> 16;
-//                             slen[3] = fb->len >> 24;
-//                             wf_client.write(slen, 4);
-//                             wf_client.write(fb->buf, fb->len);
-//                             Serial.println("Camera send");
-//                             esp_camera_fb_return(fb);
-//                         }
-//                     }
-//                 }
-//                 // close the connection:
-//                 wf_client.stop();
-//                 Serial.println("Camera Client Disconnected.");
-//                 ESP.restart();
-//             }
-//         }
-//     }
-// }
+
 
 void loopTask_Camera(void *pvParameters)
 {

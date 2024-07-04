@@ -7,15 +7,15 @@
 #include <WiFiAP.h>
 
 ///////////////////WiFi drive area////////////////////////////////////////
-char* ssid_Router     =   "********";    //Modify according to your router name
-char* password_Router =   "********";    //Modify according to your router password
+char* ssid_Router     =   "iPhonejason";    //Modify according to your router name
+char* password_Router =   "jl93360";    //Modify according to your router password
 char* ssid_AP         =   "Sunshine";    //ESP32 turns on an AP and calls it Sunshine
 char* password_AP     =   "Sunshine";    //Set your AP password for ESP32 to Sunshine
 bool WiFi_MODE = 1;
 
-IPAddress local_IP(192, 168, 4, 1);
-IPAddress gateway(192, 168, 4, 1);
-IPAddress subnet(255, 255, 255, 0);
+IPAddress local_IP(172, 20, 10, 3);
+IPAddress gateway(172, 20, 10, 1);
+IPAddress subnet(255, 255, 255, 240);
 
 //Initialize WiFi function
 void WiFi_Setup(bool WiFi_Mode)
