@@ -148,6 +148,7 @@ bool cameraSetup(void)
   Serial.println("Camera configuration complete!");
   return 1;
 }
+
 //Set the camera to flip up and down
 void camera_vflip(bool enable)
 {

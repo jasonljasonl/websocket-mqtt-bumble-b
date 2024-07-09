@@ -97,14 +97,14 @@ void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed)
   m4_speed = MOTOR_4_DIRECTION * constrain(m4_speed, MOTOR_SPEED_MIN, MOTOR_SPEED_MAX);
   if (m1_speed > 0)
   {
-    m1_speed = constrain(m1_speed, 1600, 4095);
+  //  m1_speed = constrain(m1_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M1_IN1, m1_speed);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M1_IN2, 0);
   }
   else if (m1_speed < 0)
   {
     m1_speed = -m1_speed;
-    m1_speed = constrain(m1_speed, 1600, 4095);
+   // m1_speed = constrain(m1_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M1_IN1, 0);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M1_IN2, m1_speed);
   }
@@ -115,14 +115,14 @@ void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed)
   }
   if (m2_speed > 0)
   {
-    m2_speed = constrain(m2_speed, 1600, 4095);
+  //  m2_speed = constrain(m2_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M2_IN1, m2_speed);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M2_IN2, 0);
   }
   else if (m2_speed < 0)
   {
     m2_speed = -m2_speed;
-    m2_speed = constrain(m2_speed, 1600, 4095);
+  //  m2_speed = constrain(m2_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M2_IN1, 0);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M2_IN2, m2_speed);
   }
@@ -133,14 +133,14 @@ void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed)
   }
   if (m3_speed > 0)
   {
-    m3_speed = constrain(m3_speed, 1600, 4095);
+  //  m3_speed = constrain(m3_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M3_IN1, m3_speed);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M3_IN2, 0);
   }
   else if (m3_speed < 0)
   {
     m3_speed = -m3_speed;
-    m3_speed = constrain(m3_speed, 1600, 4095);
+  //  m3_speed = constrain(m3_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M3_IN1, 0);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M3_IN2, m3_speed);
   }
@@ -151,14 +151,14 @@ void Motor_Move(int m1_speed, int m2_speed, int m3_speed, int m4_speed)
   }
   if (m4_speed > 0)
   {
-    m4_speed = constrain(m4_speed, 1600, 4095);
+  //  m4_speed = constrain(m4_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M4_IN1, m4_speed);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M4_IN2, 0);
   }
   else if (m4_speed < 0)
   {
     m4_speed = -m4_speed;
-    m4_speed = constrain(m4_speed, 1600, 4095);
+ //   m4_speed = constrain(m4_speed, 1600, 4095);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M4_IN1, 0);
     pca9685.setChannelPulseWidth(PIN_MOTOR_M4_IN2, m4_speed);
   }
