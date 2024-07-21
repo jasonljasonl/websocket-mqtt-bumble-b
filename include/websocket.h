@@ -3,17 +3,17 @@
 #include <ESPAsyncWebServer.h>
 
 
-
-
+// Intégration de la page en HTML
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
-  <title>ESP Web Server</title>
+  <title>Bumble-B Web Server</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
 
 
 
+<!--  *********  CSS (à mettre dans un fichier a part) *************  -->
 
   <style>
   html {
@@ -77,23 +77,40 @@ const char index_html[] PROGMEM = R"rawliteral(
    }
   </style>
 
+<!-- ************ FIN DU CSS ****************** -->
 
-
-
-<title>ESP Web Server</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
 </head>
+
+
 <body>
   <div class="topnav">
-    <h1>ESP WebSocket Server</h1>
+    <h1>Bumble-B WebSocket Server</h1>
   </div>
-  <div class="content">
-    <div class="card">
-      <h2>Output - GPIO 2</h2>
-      <p class="state">state: <span id="state">%STATE%</span></p>
-      <p><button id="button" class="button">Toggle</button></p>
 
+
+
+
+
+
+<!-- ***************** AFFICHAGE DE LA CAMÉRA DE LA VOITURE ******************** -->
+
+
+<div id="camera-stream">
+    <!-- IP du streaming -->
+    <img src="http://172.20.10.3:81/stream" width="1080px" height="600px">
+</div>
+
+
+<!-- *************** FIN DE L'AFFICHAGE DE LA CAMÉRA *********************** -->
+
+
+
+
+
+<!-- **************** COMMANDES DE LA VOITURE ******************** -->
+
+
+  <div class="content">
 
       <p><button id="button_haut" class="button">Haut</button></p>
       <p><button id="button_bas" class="button">Bas</button></p>
@@ -101,16 +118,24 @@ const char index_html[] PROGMEM = R"rawliteral(
       <p><button id="button_gauche" class="button">Gauche</button></p>
       <p><button id="button_stop" class="button">STOP</button></p>
 
-
-
     </div>
   </div>
 
+<!-- **************** FIN DES COMMANDES DE LA VOITURE ******************** -->
 
 
   
+
+
+<!-- **************** SCRIPT JAVASCRIPT DE LA VOITURE (COMMUNICATION ENTRE LA VOITURE ET L'ESP32) *************** -->
+
 <script>
+
+  <!-- Lien du websocket ws://AdresseDeLaVoiture/ws -->
   var gateway = `ws://${window.location.hostname}/ws`;
+
+
+  <!-- Initialisation de la page Websocket -->
   var websocket;
   window.addEventListener('load', onLoad);
   function initWebSocket() {
@@ -118,43 +143,37 @@ const char index_html[] PROGMEM = R"rawliteral(
     websocket = new WebSocket(gateway);
     websocket.onopen    = onOpen;
     websocket.onclose   = onClose;
-    websocket.onmessage = onMessage; // <-- add this line
   }
+
+
+  <!-- Vérification de l'ouverture de la connexion dans la console -->
   function onOpen(event) {
     console.log('Connection opened');
   }
+
+  <!-- Vérification de la fermeture de la connexion dans la console -->
   function onClose(event) {
     console.log('Connection closed');
     setTimeout(initWebSocket, 2000);
   }
-  function onMessage(event) {
-    var state;
-    if (event.data == "1"){
-      state = "ON";
-    }
-    else{
-      state = "OFF";
-    }
-    document.getElementById('state').innerHTML = state;
-  }
 
 
+
+  <!-- Appel des fonctions -->
   function onLoad(event) {
     initWebSocket();
     initButton();
-
     initButtonHaut();
     initButtonBas();
     initButtonDroite();
     initButtonGauche();
     initButtonStop();
-
   }
 
 
-  function initButton() {
-    document.getElementById('button').addEventListener('click', toggle);
 
+  <!-- Récupération des boutons par l'ID et appel des fonctions aux clics  -->
+  function initButton() {
     document.getElementById('button_haut').addEventListener('click', btnHaut);
     document.getElementById('button_bas').addEventListener('click', btnBas);
     document.getElementById('button_droite').addEventListener('click', btnDroite);
@@ -165,10 +184,9 @@ const char index_html[] PROGMEM = R"rawliteral(
   }
 
 
-  function toggle(){
-    websocket.send('toggle');
-  }
 
+  <!-- Déclarations des fonctions. Chaque fonction envoi du texte au format JSON à l'ESP32 qui sert à intéragir avec la voiture --> 
+  <!-- "cmd : 1" correspond aux moteurs, "data", à la vitesse ([moteur1, moteur2, moteur3, moteur4]) -->
   function btnHaut(){
     websocket.send('{"cmd": 1,"data": [1000, 1000, 1000, 1000]}');
   }
@@ -178,11 +196,11 @@ const char index_html[] PROGMEM = R"rawliteral(
   }
 
   function btnDroite(){
-    websocket.send('{"cmd": 1,"data": [1000, 1000, -1000, -1000]}');
+    websocket.send('{"cmd": 1,"data": [2000, 2000, -1000, -1000]}');
   }
 
   function btnGauche(){
-    websocket.send('{"cmd": 1,"data": [-10000, -1000, 1000, 1000]}');
+    websocket.send('{"cmd": 1,"data": [-1000, -1000, 2000, 2000]}');
   }
 
   function btnStop(){
@@ -190,6 +208,8 @@ const char index_html[] PROGMEM = R"rawliteral(
   }
 
 </script>
+
+<!-- ******************** FIN DU SCRIPT DE LA VOITURE ***************** ->
 
 
 </body>

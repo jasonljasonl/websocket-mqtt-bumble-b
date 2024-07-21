@@ -6,6 +6,11 @@
 #include <WiFiClient.h>
 #include <WiFiAP.h>
 
+
+// Définir le modèle de caméra utilisé
+#define CAMERA_MODEL_WROVER_KIT
+
+
 ///////////////////WiFi drive area////////////////////////////////////////
 char* ssid_Router     =   "iPhonejason";    //Modify according to your router name
 char* password_Router =   "jl93360";    //Modify according to your router password
