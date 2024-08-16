@@ -2,29 +2,16 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-
-// Intégration de la page en HTML
-const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE HTML><html>
-<head>
-  <title>Bumble-B Web Server</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,">
-
-
-
-<!--  *********  CSS (à mettre dans un fichier a part) *************  -->
-
-  <style>
-  html {
+// CSS de la page
+const char styles_css[] PROGMEM = R"rawliteral(
+html {
     font-family: Arial, Helvetica, sans-serif;
     text-align: center;
-  }
-  h1 {
-    font-size: 1.8rem;
+    background-color: #020617;
     color: white;
   }
-  h2{
+
+  h2 {
     font-size: 1.5rem;
     font-weight: bold;
     color: #143642;
@@ -42,178 +29,268 @@ const char index_html[] PROGMEM = R"rawliteral(
     margin: 0 auto;
   }
   .card {
-    background-color: #F8F7F9;;
+    background-color: #F8F7F9;
     box-shadow: 2px 2px 12px 1px rgba(140,140,140,.5);
-    padding-top:10px;
-    padding-bottom:20px;
+    padding-top: 10px;
+    padding-bottom: 20px;
   }
-  .button {
-    padding: 15px 50px;
-    font-size: 24px;
-    text-align: center;
-    outline: none;
-    color: #fff;
-    background-color: #0f8b8d;
-    border: none;
-    border-radius: 5px;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: rgba(0,0,0,0);
-   }
-   /*.button:hover {background-color: #0f8b8d}*/
-   .button:active {
-     background-color: #0f8b8d;
-     box-shadow: 2 2px #CDCDCD;
-     transform: translateY(2px);
-   }
-   .state {
-     font-size: 1.5rem;
-     color:#8c8c8c;
-     font-weight: bold;
-   }
-  </style>
+  .state {
+    font-size: 1.5rem;
+    color: #8c8c8c;
+    font-weight: bold;
+  }
+  #camera-stream {
+    transform: rotate(180deg);
+    width:100%;
 
-<!-- ************ FIN DU CSS ****************** -->
+  }
 
+  #camera-stream img {
+    width:100%;
+    height:100%;
+  }
+
+  #joystick {
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+    position: relative;
+  }
+  .back {
+    opacity: 0.8;
+    background-color: #1E293B
+  }
+  #joystickCommandes {
+    display:flex;
+    width:100%;
+  }
+  #joystick {
+  padding: 50px;
+  }
+  #joystickCam {
+  padding : 150px;
+  }
+  #vitesseVoiture {
+  font-size:33px;
+  margin:0 16px 0 16px;
+  }
+  #titre-vitesse {
+  font-size:17px;
+  }
+  #div-vitesse {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  }
+
+
+)rawliteral";
+
+// Intégration de la page en HTML
+const char index_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html>
+<head>
+  <title>Bumble-B Web Server</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/styles.css">
 </head>
-
-
 <body>
-  <div class="topnav">
-    <h1>Bumble-B WebSocket Server</h1>
+
+  <div id="camera-stream">
+    <img src="http://172.20.10.3:81/stream">
   </div>
 
 
+    <div>
+      <p id="titre-vitesse">Vitesse</p>
+      <!-- Mise à jour ici pour afficher en m/s -->
+    
+    <div id ="div-vitesse">
+      <button onclick="increaseSpeedLevel()" class="regulateur-vitesse">+</button>
+      <p id="vitesseVoiture">0 m/s</p>
+      <button onclick="decreaseSpeedLevel()" class="regulateur-vitesse">-</button>
+    </div>
 
 
+      <p>Orientation du joystick :</p>
+      <p id="joystickOrientation">Neutre</p> <!-- Affichage de l'orientation -->
+    </div>
 
-
-<!-- ***************** AFFICHAGE DE LA CAMÉRA DE LA VOITURE ******************** -->
-
-
-<div id="camera-stream">
-    <!-- IP du streaming -->
-    <img src="http://172.20.10.3:81/stream" width="1080px" height="600px">
-</div>
-
-
-<!-- *************** FIN DE L'AFFICHAGE DE LA CAMÉRA *********************** -->
-
-
-
-
-
-<!-- **************** COMMANDES DE LA VOITURE ******************** -->
-
+  </div>
 
   <div class="content">
-
-      <p><button id="button_haut" class="button">Haut</button></p>
-      <p><button id="button_bas" class="button">Bas</button></p>
-      <p><button id="button_droite" class="button">Droite</button></p>
-      <p><button id="button_gauche" class="button">Gauche</button></p>
-      <p><button id="button_stop" class="button">STOP</button></p>
-
+    <div id="joystickCommandes">
+      <div id="joystick"></div>
+      <div id="joystickCam"></div>
     </div>
-  </div>
-
-<!-- **************** FIN DES COMMANDES DE LA VOITURE ******************** -->
 
 
-  
+  <!-- Inclure nipplejs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.8.6/nipplejs.min.js"></script>
 
+  <!-- Script JavaScript pour le contrôle de la voiture -->
+  <script>
+    var gateway = `ws://${window.location.hostname}/ws`;
+    var websocket;
+    window.addEventListener('load', onLoad);
 
-<!-- **************** SCRIPT JAVASCRIPT DE LA VOITURE (COMMUNICATION ENTRE LA VOITURE ET L'ESP32) *************** -->
+    function initWebSocket() {
+      console.log('Trying to open a WebSocket connection...');
+      websocket = new WebSocket(gateway);
+      websocket.onopen = onOpen;
+      websocket.onclose = onClose;
+    }
 
-<script>
+    function onOpen(event) {
+      console.log('Connection opened');
+    }
 
-  <!-- Lien du websocket ws://AdresseDeLaVoiture/ws -->
-  var gateway = `ws://${window.location.hostname}/ws`;
+    function onClose(event) {
+      console.log('Connection closed');
+      setTimeout(initWebSocket, 2000);
+    }
 
+    let currentSpeed = 95;
+    const maxSpeed = 4095;
+    const minSpeed = 95;
+    const step = 1000;
+    const maxSpeedMS = 0.56; // Vitesse max en m/s
+    let currentCameraVertical = 90;
+    let currentCameraHorizontal = 90;
+    const cameraMaxAngle = 140;
+    const cameraMinAngle = 40;
 
-  <!-- Initialisation de la page Websocket -->
-  var websocket;
-  window.addEventListener('load', onLoad);
-  function initWebSocket() {
-    console.log('Trying to open a WebSocket connection...');
-    websocket = new WebSocket(gateway);
-    websocket.onopen    = onOpen;
-    websocket.onclose   = onClose;
-  }
+    function calculateSpeedMS(joystickValue) {
+      return (joystickValue / maxSpeed) * maxSpeedMS;
+    }
 
+    function updateSpeed(speedArray) {
+      const command = {
+        cmd: 1,
+        data: speedArray
+      };
+      websocket.send(JSON.stringify(command));
+    }
 
-  <!-- Vérification de l'ouverture de la connexion dans la console -->
-  function onOpen(event) {
-    console.log('Connection opened');
-  }
+    function updateSpeedDisplay(joystickValue) {
+      let speedMS = calculateSpeedMS(joystickValue);
+      document.getElementById("vitesseVoiture").innerText = `${speedMS.toFixed(2)} m/s`;
+    }
 
-  <!-- Vérification de la fermeture de la connexion dans la console -->
-  function onClose(event) {
-    console.log('Connection closed');
-    setTimeout(initWebSocket, 2000);
-  }
+    function updateJoystickOrientation(forward, right) {
+      let orientation = 'Neutre';
+      if (forward > 0.5) {
+        orientation = 'Avant';
+      } else if (forward < -0.5) {
+        orientation = 'Arrière';
+      }
+      if (right > 0.5) {
+        orientation += ' Droite';
+      } else if (right < -0.5) {
+        orientation += ' Gauche';
+      }
+      document.getElementById("joystickOrientation").innerText = orientation;
+    }
 
+    function updateCamera(verticalAngle, horizontalAngle) {
+      const command = {
+        cmd: 3,
+        data: [verticalAngle, horizontalAngle]
+      };
+      websocket.send(JSON.stringify(command));
+    }
 
+    function onLoad(event) {
+      initWebSocket();
+      initJoystick();
+      initJoystickCam();
+      updateSpeedDisplay(0); // Initial display
+      updateJoystickOrientation(0, 0); // Initial orientation display
+    }
 
-  <!-- Appel des fonctions -->
-  function onLoad(event) {
-    initWebSocket();
-    initButton();
-    initButtonHaut();
-    initButtonBas();
-    initButtonDroite();
-    initButtonGauche();
-    initButtonStop();
-  }
+    function initJoystick() {
+      var options = {
+        zone: document.getElementById('joystick'),
+        mode: 'static',
+        position: { left: '100%', top: '50%' },
+        color: 'blue',
+      };
+      var manager = nipplejs.create(options);
 
+      manager.on('move', function (evt, data) {
+        var forward = data.vector.y;
+        var right = data.vector.x;
 
+        var speedLeft = Math.round(currentSpeed * forward);
+        var speedRight = Math.round(currentSpeed * forward);
 
-  <!-- Récupération des boutons par l'ID et appel des fonctions aux clics  -->
-  function initButton() {
-    document.getElementById('button_haut').addEventListener('click', btnHaut);
-    document.getElementById('button_bas').addEventListener('click', btnBas);
-    document.getElementById('button_droite').addEventListener('click', btnDroite);
-    document.getElementById('button_gauche').addEventListener('click', btnGauche);
-    document.getElementById('button_stop').addEventListener('click', btnStop);
+        if (right > 0) {
+          speedLeft = Math.round(currentSpeed * forward * (1 - right));
+        } else if (right < 0) {
+          speedRight = Math.round(currentSpeed * forward * (1 + right));
+        }
 
+        let joystickValue = Math.max(speedLeft, speedRight); // Assuming max speed
+        updateSpeedDisplay(joystickValue); // Update display with proportional speed
+        updateJoystickOrientation(forward, right); // Update orientation display
+        updateSpeed([speedLeft, speedLeft, speedRight, speedRight]);
+      });
 
-  }
+      manager.on('end', function (evt) {
+        updateSpeedDisplay(0); // Affiche 0 m/s lorsque le joystick est relâché
+        updateJoystickOrientation(0, 0); // Revenir à "Neutre"
+        updateSpeed([0, 0, 0, 0]); // Arrête la voiture
+      });
+    }
 
+    function increaseSpeedLevel() {
+      if (currentSpeed + step <= maxSpeed) {
+        currentSpeed += step;
+        updateSpeedDisplay(currentSpeed);
+      }
+      console.log('Vitesse augmentée à :', currentSpeed);
+    }
 
+    function decreaseSpeedLevel() {
+      if (currentSpeed - step >= minSpeed) {
+        currentSpeed -= step;
+        updateSpeedDisplay(currentSpeed);
+      }
+      console.log('Vitesse réduite à :', currentSpeed);
+    }
 
-  <!-- Déclarations des fonctions. Chaque fonction envoi du texte au format JSON à l'ESP32 qui sert à intéragir avec la voiture --> 
-  <!-- "cmd : 1" correspond aux moteurs, "data", à la vitesse ([moteur1, moteur2, moteur3, moteur4]) -->
-  function btnHaut(){
-    websocket.send('{"cmd": 1,"data": [1000, 1000, 1000, 1000]}');
-  }
+    function initJoystickCam() {
+      var options = {
+        zone: document.getElementById('joystickCam'),
+        mode: 'static',
+        position: { left: '80px' },
+        color: 'red',
+      };
+      var manager = nipplejs.create(options);
 
-  function btnBas(){
-    websocket.send('{"cmd": 1,"data": [-1000, -1000, -1000, -1000]}');
-  }
+      manager.on('move', function (evt, data) {
+        var verticalCamera = data.vector.y;
+        var horizontalCamera = data.vector.x;
 
-  function btnDroite(){
-    websocket.send('{"cmd": 1,"data": [2000, 2000, -1000, -1000]}');
-  }
+        var newCameraVertical = currentCameraVertical + Math.round(verticalCamera * 25);
+        var newCameraHorizontal = currentCameraHorizontal + Math.round(horizontalCamera * 25);
 
-  function btnGauche(){
-    websocket.send('{"cmd": 1,"data": [-1000, -1000, 2000, 2000]}');
-  }
+        // Constrain the camera values between 40 and 140 degrees
+        newCameraVertical = Math.max(cameraMinAngle, Math.min(cameraMaxAngle, newCameraVertical));
+        newCameraHorizontal = Math.max(cameraMinAngle, Math.min(cameraMaxAngle, newCameraHorizontal));
 
-  function btnStop(){
-    websocket.send('{"cmd": 1,"data": [000, 000, 000, 000]}');
-  }
+        updateCamera(newCameraVertical, newCameraHorizontal);
+      });
 
-</script>
+      manager.on('end', function (evt) {
+        currentCameraVertical = 90;
+        currentCameraHorizontal = 90;
+        updateCamera(currentCameraVertical, currentCameraHorizontal); // Reposition to the center (90 degrees) when joystick is released
+      });
+    }
 
-<!-- ******************** FIN DU SCRIPT DE LA VOITURE ***************** ->
-
-
+  </script>
 </body>
 </html>
 )rawliteral";
-
-

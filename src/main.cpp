@@ -12,11 +12,11 @@
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 #include <limits.h>
+#include <SPIFFS.h>
 
 
 // Intégration de la page websocket servant a controler la voiture
 #include "websocket.h"
-
 
 
 #define CAMERA_MODEL_WROVER_KIT
@@ -33,7 +33,7 @@ char *password_wifi = "jl933602"; // Le password du WiFi
 
 const char *mqtt_server = "172.20.10.2";
 const int mqtt_port = 1883;
-const int mqtt_interval_ms = 5000; // L'interval en ms entre deux envois de données
+const int mqtt_interval_ms = 1000; // L'interval en ms entre deux envois de données
 char *mqttId = "";
 char *mqttUser = "";
 char *mqttPass = "";
@@ -260,7 +260,12 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-
+  // Initialisation de SPIFFS
+  if (!SPIFFS.begin(true)) {
+    Serial.println("SPIFFS Initialisation failed!");
+    return;
+  }
+  Serial.println("SPIFFS Initialisation done.");
 
 
     pinMode(ledPin, OUTPUT);
@@ -331,6 +336,9 @@ void setup()
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html, processor);
+  });
+  server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/css", styles_css);
   });
 
 
@@ -441,6 +449,8 @@ void setup()
   Serial.print("Camera Ready! Use 'http://");
   Serial.print(WiFi.localIP());
   Serial.println("' to connect");
+
+
 }
 
 void loop()
@@ -488,13 +498,13 @@ void loop()
 
 
     }
+
+
+
+
+
+
 }
-
-
-
-
-
-
 
 
 
