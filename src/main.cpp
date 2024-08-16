@@ -342,6 +342,23 @@ void setup()
   });
 
 
+  server.on("/script_joystick_roues.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_joystick_roues.js", "text/javascript");
+  });
+  server.on("/script_joystick_camera.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_joystick_camera.js", "text/javascript");
+  });
+  server.on("/script_main.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_main.js", "text/javascript");
+  });
+  server.on("/script_moteur.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_moteur.js", "text/javascript");
+  });
+  server.on("/script_websocket.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_websocket.js", "text/javascript");
+  });
+
+
     server.begin();
 
     // Init the state of the car
