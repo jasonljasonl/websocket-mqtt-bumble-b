@@ -126,10 +126,14 @@ const char index_html[] PROGMEM = R"rawliteral(
     </div>
 
 
+  <div id="timer">00:00:00</div>
+  <button id="startRace" onclick="startRace()">Démarrer la course</button>
+  <button id="stopRace" onclick="stopRace()" disabled>Arrêter la course</button>
+
+
   <!-- Inclure nipplejs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.8.6/nipplejs.min.js"></script>
 
-  <!-- Script JavaScript pour le contrôle de la voiture -->
 
 
 <script src="/script_joystick_roues.js"></script>
@@ -137,7 +141,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 <script src="/script_main.js"></script>
 <script src="/script_moteur.js"></script>
 <script src="/script_websocket.js"></script>
-
+<script src="/script_chronometre.js"></script>
 
 
 </body>

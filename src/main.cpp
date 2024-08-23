@@ -358,6 +358,9 @@ void setup()
     request->send(SPIFFS, "/script_websocket.js", "text/javascript");
   });
 
+  server.on("/script_chronometre.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_chronometre.js", "text/javascript");
+  });
 
     server.begin();
 
