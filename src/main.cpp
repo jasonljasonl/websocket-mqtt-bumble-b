@@ -22,6 +22,8 @@
 #define CAMERA_MODEL_WROVER_KIT
 #define STREAM_CONTENT_BOUNDARY "123456789000000000000987654321"
 
+#define FILE_PHOTO "/photo.jpg"
+
 // Ressources
 // https://randomnerdtutorials.com/esp32-websocket-server-arduino/#1
 // https://randomnerdtutorials.com/esp32-mqtt-publish-subscribe-arduino-ide/-
@@ -43,6 +45,7 @@ char *mqttPass = "";
 bool ledState = 0;
 const int ledPin = 3;
 
+bool takeNewPhoto = false;
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
@@ -256,6 +259,7 @@ String processor(const String& var) {
 void setup()
 {
     // delay(5000);
+void capturePhotoSaveSpiffs(void);
 
     Serial.begin(115200);
     Serial.setDebugOutput(true);
@@ -360,6 +364,19 @@ void setup()
 
   server.on("/script_chronometre.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/script_chronometre.js", "text/javascript");
+  });
+
+  server.on("/script_photo.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script_photo.js", "text/javascript");
+  });
+
+  server.on("/capture", HTTP_GET, [](AsyncWebServerRequest * request) {
+    takeNewPhoto = true;
+    request->send_P(200, "text/plain", "Taking Photo");
+  });
+
+  server.on("/saved-photo", HTTP_GET, [](AsyncWebServerRequest * request) {
+    request->send(SPIFFS, FILE_PHOTO, "image/jpg", false);
   });
 
     server.begin();
@@ -472,10 +489,56 @@ void setup()
 
 
 }
+bool checkPhoto( fs::FS &fs ) {
+  File f_pic = fs.open( FILE_PHOTO );
+  unsigned int pic_sz = f_pic.size();
+  return ( pic_sz > 100 );
+}
 
+// Capture Photo and Save it to SPIFFS
+void capturePhotoSaveSpiffs( void ) {
+  camera_fb_t * fb = NULL; // pointer
+  bool ok = 0; // Boolean indicating if the picture has been taken correctly
+
+  do {
+    // Take a photo with the camera
+    Serial.println("Taking a photo...");
+
+    fb = esp_camera_fb_get();
+    if (!fb) {
+      Serial.println("Camera capture failed");
+      return;
+    }
+
+    // Photo file name
+    Serial.printf("Picture file name: %s\n", FILE_PHOTO);
+    File file = SPIFFS.open(FILE_PHOTO, FILE_WRITE);
+
+    // Insert the data in the photo file
+    if (!file) {
+      Serial.println("Failed to open file in writing mode");
+    }
+    else {
+      file.write(fb->buf, fb->len); // payload (image), payload length
+      Serial.print("The picture has been saved in ");
+      Serial.print(FILE_PHOTO);
+      Serial.print(" - Size: ");
+      Serial.print(file.size());
+      Serial.println(" bytes");
+    }
+    // Close the file
+    file.close();
+    esp_camera_fb_return(fb);
+
+    // check if file has been correctly saved in SPIFFS
+    ok = checkPhoto(SPIFFS);
+  } while ( !ok );
+}
 void loop()
 {
-    // put your main code here, to run repeatedly:
+
+
+   // put your main code here, to run repeatedly:
     ws.cleanupClients();
 
     digitalWrite(ledPin, ledState);
@@ -521,11 +584,16 @@ void loop()
 
 
 
-
+  if (takeNewPhoto) {
+    capturePhotoSaveSpiffs();
+    takeNewPhoto = false;
+  }
+  delay(1);
 
 
 }
 
+// Check if photo capture was successful
 
 
 void reconnect()

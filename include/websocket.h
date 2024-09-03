@@ -102,6 +102,19 @@ const char index_html[] PROGMEM = R"rawliteral(
   </div>
 
 
+
+  <div id="container">
+    <p>
+      <button onclick="rotatePhoto();">ROTATE</button>
+      <button onclick="capturePhoto()">CAPTURE PHOTO</button>
+      <button onclick="location.reload();">REFRESH PAGE</button>
+    </p>
+  </div>
+  
+  <div><img src="saved-photo" id="photo" width="70%"></div>
+
+
+
     <div>
       <p id="titre-vitesse">Vitesse</p>
       <!-- Mise à jour ici pour afficher en m/s -->
@@ -142,6 +155,7 @@ const char index_html[] PROGMEM = R"rawliteral(
 <script src="/script_moteur.js"></script>
 <script src="/script_websocket.js"></script>
 <script src="/script_chronometre.js"></script>
+<script src="/script_photo.js"></script>
 
 
 </body>
