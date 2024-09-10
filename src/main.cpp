@@ -39,11 +39,6 @@ char *mqttUser = "";
 char *mqttPass = "";
 
 
-// test des boutons avec ledPin
-bool ledState = 0;
-const int ledPin = 3;
-
-
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
 
@@ -96,12 +91,6 @@ void WiFi_Init()
 
 
 
-// put function definitions here:
-void notifyClients()
-{
-    ws.textAll(String(ledState));
-}
-
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 {
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -114,10 +103,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     {
         data[len] = 0;
 
-        if(strcmp((char*)data, "toggle") == 0) {
-          ledState = !ledState;
-          notifyClients();
-        }
 
     }
     
@@ -206,6 +191,22 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
             videoFlag = video_activation;
         }
 
+        else if (10 == cmd)
+        {
+          int car_select = doc["data"];
+            if(car_select == 2) {
+            Car_Select(2);
+            Serial.print("Mode suivi de ligne activé");
+          }
+          else {
+            Car_Select(0);
+            Serial.print("Mode manuel activé");
+          }
+        }
+        
+
+
+
         notifyClients();
     }
 }
@@ -239,20 +240,6 @@ void initWebSocket()
 
 
 
-String processor(const String& var) {
-  Serial.println(var);
-  if(var == "State") {
-    if(ledState){
-      return "ON";
-    }
-    else {
-      return "OFF";
-    }
-  }
-  return String();
-}
-
-
 void setup()
 {
     // delay(5000);
@@ -266,12 +253,6 @@ void setup()
     return;
   }
   Serial.println("SPIFFS Initialisation done.");
-
-
-    pinMode(ledPin, OUTPUT);
-    digitalWrite(ledPin, LOW);
-
-
 
 
     if (!WiFi.config(localIP, localGateway, localSubnet, primaryDNS, secondaryDNS))
@@ -335,7 +316,7 @@ void setup()
 
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html, processor);
+    request->send_P(200, "text/html", index_html);
   });
   server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/css", styles_css);
@@ -477,8 +458,6 @@ void loop()
 {
     // put your main code here, to run repeatedly:
     ws.cleanupClients();
-
-    digitalWrite(ledPin, ledState);
 
 
     Emotion_Show(emotion_task_mode); // Led matrix display function
