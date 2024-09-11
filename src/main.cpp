@@ -286,6 +286,14 @@ void setup()
 
     initWebSocket();
 
+
+  server.on("/track", HTTP_GET, [](AsyncWebServerRequest *request){
+    float distance = Get_Sonar();
+    String json = "{\"distance\": " + String(distance) + "}";
+    request->send(200, "application/json", json);
+  });
+
+
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html);
