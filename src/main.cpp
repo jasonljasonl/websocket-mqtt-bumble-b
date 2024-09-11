@@ -191,25 +191,27 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
             videoFlag = video_activation;
         }
 
+
+        // On ajoute la commande cmd 10 qui consiste a activer le mode de suivi de ligne
         else if (10 == cmd)
         {
           int car_select = doc["data"];
-            if(car_select == 2) {
+            if(car_select == 1) {
             Car_Select(2);
             Serial.print("Mode suivi de ligne activé");
           }
-          else {
+          else if(car_select == 0) {
             Car_Select(0);
+          }
             Serial.print("Mode manuel activé");
           }
         }
         
 
 
-
-        notifyClients();
+        // notifyClients();
     }
-}
+
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
@@ -279,40 +281,10 @@ void setup()
     Track_Setup();      // Track initialization
     Ultrasonic_Setup(); // Initialize the ultrasonic module
 
-    // Cette section serait peut être à virer...
-   // disableCore0WDT(); // Turn off the watchdog function in kernel 0
-   // xTaskCreateUniversal(loopTask_Camera, "loopTask_Camera", 8192, NULL, 0, NULL, 0);
-   // xTaskCreateUniversal(loopTask_WTD, "loopTask_WTD", 8192, NULL, 0, NULL, 0);
-
     client.setServer(mqtt_server, mqtt_port);
 
 
     initWebSocket();
-
-    // server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-    //           { 
-    //             camera_fb_t *fb = NULL;
-    //             fb = esp_camera_fb_get();
-    //                     if (fb != NULL)
-    //                     {
-    //                         uint8_t slen[4];
-    //                         slen[0] = fb->len >> 0;
-    //                         slen[1] = fb->len >> 8;
-    //                         slen[2] = fb->len >> 16;
-    //                         slen[3] = fb->len >> 24;
-    //                         AsyncResponseStream *response = request->beginResponseStream("image");
-    //                         // response->write(slen, 4);
-    //                         response->write(fb->buf, fb->len);
-    //                         request->send(response);
-    //                         // client.write(slen, 4);
-    //                         // client.write(fb->buf, fb->len);
-    //                         // request->send_P(200, "application/octet-stream", fb->buf, fb->len);
-    //                         // request->send(fb->buf, "application/octet-stream", fb->len);
-    //                         // Serial.println("Camera send");
-    //                         esp_camera_fb_return(fb);
-    //                         fb = NULL;
-    //                     } });
-
 
   // Route for root / web page
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -454,8 +426,12 @@ void setup()
 
 }
 
+
+
 void loop()
 {
+
+
     // put your main code here, to run repeatedly:
     ws.cleanupClients();
 
@@ -500,6 +476,11 @@ void loop()
 
 
 
+
+
+
+
+  
 
 
 
