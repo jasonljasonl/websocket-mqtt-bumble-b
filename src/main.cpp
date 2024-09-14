@@ -294,34 +294,10 @@ void setup()
   });
 
 
-  // Route for root / web page
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html);
-  });
-  server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/css", styles_css);
-  });
 
 
-  server.on("/script_joystick_roues.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script_joystick_roues.js", "text/javascript");
-  });
-  server.on("/script_joystick_camera.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script_joystick_camera.js", "text/javascript");
-  });
-  server.on("/script_main.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script_main.js", "text/javascript");
-  });
-  server.on("/script_moteur.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script_moteur.js", "text/javascript");
-  });
-  server.on("/script_websocket.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script_websocket.js", "text/javascript");
-  });
 
-  server.on("/script_chronometre.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script_chronometre.js", "text/javascript");
-  });
+
 
     server.begin();
 
