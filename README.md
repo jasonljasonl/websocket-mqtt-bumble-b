@@ -24,12 +24,12 @@ char *ssid_wifi = "votre_wifi";    // Le nom du réseau WiFi
 char *password_wifi = "votre_mdp_wifi"; // Le password du WiFi
 
 const char *mqtt_server = "xxx.xxx.xxx.xx"; // L'IP de votre broker MQTT
-const int mqtt_interval_ms = XXXX;          // L'interval en ms entre deux envois de données
+const int mqtt_interval_ms = xxxx;          // L'interval en ms entre deux envois de données
 
 IPAddress localIP(xxx, xxx, xxx, xx); // l'IP que vous voulez donner à votre voiture
 
-IPAddress localGateway(192, 168, 145, 55); // L'IP de la gateway de votre réseau
-IPAddress localSubnet(255, 255, 255, 0);   // Le masque de sous réseau
+IPAddress localGateway(xxx, xxx, xxx, xx); // L'IP de la gateway de votre réseau
+IPAddress localSubnet(xxx, xxx, xxx, x);   // Le masque de sous réseau
 
 // ...
 AsyncWebSocket ws("/ws"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
@@ -76,7 +76,9 @@ On pourrait aussi avoir l'exemple suivant pour assigner le "visage" 3 sur la voi
 | Couleur secondaire des LED | 6      | Array[4]  | La première valeur est la représentation binaire d'un bitmask identifiant la LED, les 3 valeurs suivantes sont des valeurs RGB entre 0 et 255. Si la première valeur est 0, le changement affectera toutes les LED. Ce réglage n'est visible que sur certaines animations |
 | Buzzer Alarm               | 7      | int       | Off: 0, On: 1. Déclenche le buzzer d'alarme                                                                                                                                                                                                                               |
 | Buzzer Variable            | 8      | Array[2]  | La première valeur est un ON/OFF (1/0), la seconde est la fréquence du son (entre 0 et 10000Hz)                                                                                                                                                                           |
-| Video Activation           | 9      | int       | Off: 0, On: 1. Active ou désactive le flux video                                                                                                                                                             | Mode de la voiture           | 10      | int       | Mode manuel: 0, Mode auto: 2. Switch entre le mode manuel et le mode pilotage automatique                                                             |
+| Video Activation           | 9      | int       | Off: 0, On: 1. Active ou désactive le flux video                                                                                                                                                             
+                 |
+| Video Activation           | 9      | int       | Off: 0, On: 1. Active ou désactive le flux video    
 
 ### Exemples
 
