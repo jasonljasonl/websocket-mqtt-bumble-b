@@ -15,8 +15,6 @@
 #include <SPIFFS.h>
 
 
-// Intégration de la page websocket servant a controler la voiture
-#include "websocket.h"
 
 
 #define CAMERA_MODEL_WROVER_KIT
@@ -40,7 +38,7 @@ char *mqttPass = "";
 
 
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
+AsyncWebSocket ws("/bumble-b"); // Changez le nom de ce point d'accès pour "sécuriser" l'accès à votre voiture
 
 IPAddress localIP(172, 20, 10, 3); // l'IP que vous voulez donner à votre voiture
 
@@ -209,7 +207,6 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
         
 
 
-        // notifyClients();
     }
 
 
@@ -244,7 +241,6 @@ void initWebSocket()
 
 void setup()
 {
-    // delay(5000);
 
     Serial.begin(115200);
     Serial.setDebugOutput(true);
@@ -286,7 +282,7 @@ void setup()
 
     initWebSocket();
 
-
+  // l'API pour récuprer les données du tracker de distance
   server.on("/track", HTTP_GET, [](AsyncWebServerRequest *request){
     float distance = Get_Sonar();
     String json = "{\"distance\": " + String(distance) + "}";
