@@ -33,8 +33,8 @@ const char *mqtt_server = "172.20.10.2";
 const int mqtt_port = 1883;
 const int mqtt_interval_ms = 1000; // L'interval en ms entre deux envois de données
 char *mqttId = "";
-char *mqttUser = "";
-char *mqttPass = "";
+char *mqttUser = "bumble-b";
+char *mqttPass = "bumble-b-mqtt-grp7";
 
 
 AsyncWebServer server(80);
@@ -263,12 +263,8 @@ void setup()
     Buzzer_Setup(); // Buzzer initialization
     WiFi_Init();    // WiFi paramters initialization
     WiFi_Setup(0);  // Start AP Mode. If you want to connect to a router, change 1 to 0.
-    // server_Cmd.begin(4000);    // Start the command server
     server_Camera.begin(7000); // Turn on the camera server
 
-   // cameraSetup(); // Camera initialization
-    //camera_vflip(true);
-    //camera_hmirror(true);
     
     Emotion_Setup();    // Emotion initialization
     WS2812_Setup();     // WS2812 initialization
@@ -290,18 +286,12 @@ void setup()
   });
 
 
-
-
-
-
-
     server.begin();
 
     // Init the state of the car
     Emotion_SetMode(1);
     WS2812_SetMode(1);
     
-
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
@@ -431,11 +421,6 @@ void loop()
     {
         last_message = now;
 
-        // Les led et la batteries sont branchés tous les deux sur le pin 32
-        // du coup, lire la valeur de batterie fait freeze la batterie
-        // Battery level
-        // dtostrf(Get_Battery_Voltage(), 5, 2, buff);
-        // client.publish("esp32/battery", buff);
 
         // Track Read
         Track_Read();
@@ -455,15 +440,6 @@ void loop()
     }
 
 
-
-
-
-
-
-  
-
-
-
 }
 
 
@@ -473,10 +449,6 @@ void reconnect()
     // Loop until we're reconnected
     while (!client.connected())
     {
-
-
-
-
 
         Serial.print("Attempting MQTT connection...");
         // Attempt to connect
@@ -526,22 +498,12 @@ void loopTask_Camera(void *pvParameters)
                             wf_client.write(size_buf);
                             wf_client.write(fb->buf, fb->len);
 
-                            // uint8_t slen[4];
-                            // slen[0] = fb->len >> 0;
-                            // slen[1] = fb->len >> 8;
-                            // slen[2] = fb->len >> 16;
-                            // slen[3] = fb->len >> 24;
-                            // wf_client.write(slen, 4);
-                            // wf_client.write(fb->buf, fb->len);
-                            // Serial.println("Camera send");
-                            //esp_camera_fb_return(fb);
                         }
                     }
                 }
                 // close the connection:
                 wf_client.stop();
                 Serial.println("Camera Client Disconnected.");
-                // ESP.restart();
             }
         }
     }
